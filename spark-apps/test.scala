@@ -15,6 +15,18 @@ val spark = SparkSession.builder()
 
 import spark.implicits._
 
+
+println("Reading data from HDFS...")
+val customer_df = spark.read.format("parquet").load("hdfs://namenode:9000/txn/customer")
+
+println("Customer table:")
+customer_df.show()
+
+val transaction_df = spark.read.format("parquet").load("hdfs://namenode:9000/txn/transaction")
+
+println("Transaction table:")
+transaction_df.show()
+
 println("Reading data from MySQL...")
 val product_df = spark.read
   .format("jdbc")
@@ -25,11 +37,23 @@ val product_df = spark.read
   .option("password", "admin")
   .load()
 
-println("Product data from MySQL:")
+println("Product table:")
 product_df.show()
 
-println("Schema:")
-product_df.printSchema()
+val layout_df = spark.read
+  .format("jdbc")
+  .option("driver", "com.mysql.cj.jdbc.Driver")
+  .option("url", "jdbc:mysql://mysql:3306/txn")
+  .option("dbtable", "layout")
+  .option("user", "root")
+  .option("password", "admin")
+  .load()
+
+println("Layout table:")
+layout_df.show()
+
+
+
 
     
     
