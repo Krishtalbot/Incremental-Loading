@@ -1,0 +1,36 @@
+docker exec -it mysql-spark-master /spark/bin/spark-shell --master spark://mysql-spark-master:7077 --jars /opt/spark/jars/mysql-connector-j-8.0.33.jar
+
+docker exec -it mysql-container mysql -u root -p
+
+// Set log level to reduce verbose output
+spark.sparkContext.setLogLevel("WARN")
+
+// Or even quieter:
+// spark.sparkContext.setLogLevel("ERROR")
+
+-------------------- Reading mysql from spark --------------------------------------
+
+spark.read.format("jdbc").option("driver", "com.mysql.cj.jdbc.Driver").option("url", "jdbc:mysql://mysql:3306/txn").option("dbtable", "product").option("user", "root").option("password", "admin").load()
+
+-------------------- Alternative Spark Shell Commands --------------------------------------
+
+// Option 1: With JAR mounted via volume (recommended - after docker-compose restart)
+docker exec -it mysql-spark-master /spark/bin/spark-shell --master spark://mysql-spark-master:7077 --jars /opt/spark/jars/mysql-connector-j-8.0.33.jar
+
+// Option 2: Using Spark packages (downloads automatically)
+docker exec -it mysql-spark-master /spark/bin/spark-shell --master spark://mysql-spark-master:7077 --packages com.mysql:mysql-connector-j:8.0.33
+
+// Option 3: Copy JAR into running container (if volume mount doesn't work)
+// docker cp ./jars/mysql-connector-j-8.0.33.jar mysql-spark-master:/opt/spark/jars/
+// docker exec -it mysql-spark-master /spark/bin/spark-shell --master spark://mysql-spark-master:7077
+
+-------------------- Verify JAR is available --------------------------------------
+
+// Check if JAR is available in the container
+docker exec -it mysql-spark-master ls -la /opt/spark/jars/ | grep mysql
+
+// Test the JDBC connection in Spark
+val product_df = spark.read.format("jdbc").option("driver", "com.mysql.cj.jdbc.Driver").option("url", "jdbc:mysql://mysql:3306/txn").option("dbtable", "product").option("user", "root").option("password", "admin").load()
+
+// Show the DataFrame
+product_df.show()
